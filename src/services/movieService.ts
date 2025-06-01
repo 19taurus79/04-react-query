@@ -5,6 +5,7 @@ axios.defaults.baseURL = 'https://api.themoviedb.org/3/search/movie';
 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 interface fetchMovieProps {
   query: string;
+  page: number;
 }
 interface fetchMoviesResponse {
   page: number;
@@ -14,10 +15,12 @@ interface fetchMoviesResponse {
 }
 export const fetchMovies = async ({
   query,
+  page,
 }: fetchMovieProps): Promise<fetchMoviesResponse> => {
   const response = await axios.get<fetchMoviesResponse>('', {
     params: {
       query,
+      page,
     },
   });
   //   console.log(response.data);

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import css from './App.module.css';
 import SearchBar from '../SearchBar/SearchBar';
 import { fetchMovies } from '../../services/movieService';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import MovieGrid from '../MovieGrid/MovieGrid';
 import Loader from '../Loader/Loader';
 import ErrorMessage from '../ErrorMessage/ErrorMessage';
@@ -33,7 +33,8 @@ export default function App() {
   };
 
   const handleSearchSubmit = (searchQuery: string) => {
-    setQuery(searchQuery);
+    setQuery(searchQuery); // Update the query state with the new search term
+    setPage(1); // Reset to the first page on new search
   };
   const { data, isLoading, isError, isSuccess } = useQuery({
     queryKey: ['movies', query, page],
@@ -41,37 +42,13 @@ export default function App() {
     queryFn: () => fetchMovies({ query, page }),
     placeholderData: keepPreviousData, // Keep previous data while loading new data
   });
-  // console.log('queryFilms', data);
-  const totalPages = data?.total_pages ?? 0;
-  // useEffect(() => {
-  //   if (!query) {
-  //     setMovies([]); // Убедитесь, что фильмы сброшены, если запрос пустой
-  //     setIsLoading(false); // Лоадер должен быть выключен, если нет запроса
-  //     setIsError(false); // Ошибка сброшена
-  //     return; // Skip fetching if no query is provided
-  //   }
-  //   setMovies([]); // Reset movies state on new search
-  //   setIsLoading(true); // Set loading state
-  //   setIsError(false); // Reset error state
-  //   fetchMovies({ query })
-  //     .then((response) => {
-  //       if (response.results.length === 0) {
-  //         toast.error('No movies found for your request.');
-  //         return;
-  //       } else {
-  //         setMovies(response.results);
-  //       }
 
-  //       setIsLoading(false); // Reset loading state
-  //     })
-  //     .catch((error) => {
-  //       setIsError(true); // Set error state
-  //       console.error('Error fetching movies:', error);
-  //     })
-  //     .finally(() => {
-  //       setIsLoading(false); // Ensure loading state is reset even on error
-  //     });
-  // }, [query]);
+  const totalPages = data?.total_pages ?? 0;
+  useEffect(() => {
+    if (data?.results.length === 0 && isSuccess) {
+      toast.error('No movies found for your request.');
+    }
+  }, [data, isSuccess]);
 
   return (
     <>
@@ -93,7 +70,10 @@ export default function App() {
 
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
-      <MovieGrid movies={data?.results || []} onSelect={openModal} />
+      {(data?.total_results ?? 0) > 0 && (
+        <MovieGrid movies={data?.results || []} onSelect={openModal} />
+      )}
+
       {isModalOpen && selectedMovie && (
         <MovieModal movie={selectedMovie} onClose={closeModal} />
       )}
